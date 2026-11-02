@@ -16,6 +16,7 @@ final class RestOverlayController {
     private var observers: [NSObjectProtocol] = []
     private let power = PowerAssertions()
     private var previousApp: NSRunningApplication?
+    private var screenSaverAfterRest = false
 
     private static let kioskOptions: NSApplication.PresentationOptions = [
         .hideDock,
@@ -47,6 +48,7 @@ final class RestOverlayController {
         previousApp = front == NSRunningApplication.current ? nil : front
 
         deck = TipDeck(categories: settings.enabledCategories)
+        screenSaverAfterRest = settings.screenSaverAfterRest
         session = RestSession(tip: deck.next(), startedAt: startedAt, until: until)
         let tipTimer = Timer(timeInterval: settings.tipIntervalSeconds, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.advanceTip() }
@@ -218,6 +220,10 @@ final class RestOverlayController {
         previousApp = nil
         sweepOrphans()
         Log.write("休息屏已解除")
+        // 休息时人可能走开了：解锁后屏幕不该一直亮着内容。亮屏断言已释放，屏保不会被自己挡住
+        if screenSaverAfterRest {
+            ScreenSaver.start()
+        }
     }
 }
 

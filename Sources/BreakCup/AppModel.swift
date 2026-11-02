@@ -31,6 +31,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var detail = ""
     /// 「开会时推迟休息」的悬停说明，带上当前麦克风和摄像头状态
     @Published private(set) var meetingHint = ""
+    /// 「休息结束后启动屏幕保护」的悬停说明，带上当前的锁屏密码设置
+    @Published private(set) var screenSaverHint = AppModel.screenSaverHint(.unknown)
     @Published var todayRestCount = 0
     @Published private(set) var launchAtLogin = LoginItem.isEnabled
     @Published private(set) var loginItemNote: String? = LoginItem.note
@@ -93,6 +95,25 @@ final class AppModel: ObservableObject {
         }
         menuBarTitle = s.showCountdownInMenuBar ? title : ""
         meetingHint = "麦克风或摄像头在用时，到点先不强制休息\n麦克风：\(media.microphoneStatus)\n摄像头：\(media.cameraStatus)"
+    }
+
+    /// 重新读一次锁屏密码设置，面板打开时调用
+    func refreshScreenSaverHint() {
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let hint = Self.screenSaverHint(ScreenSaver.lockDelay())
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self?.screenSaverHint = hint }
+            }
+        }
+    }
+
+    nonisolated private static func screenSaverHint(_ delay: ScreenLockDelay) -> String {
+        var lines = [
+            "休息屏收起后接着启动系统屏幕保护，人走开了屏幕也不会一直亮着内容",
+            "唤醒时要不要输密码，看「系统设置 › 锁定屏幕」"
+        ]
+        if delay != .unknown { lines.append("当前：\(delay.summary)") }
+        return lines.joined(separator: "\n")
     }
 
     func requestRestNow() {

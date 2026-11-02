@@ -47,6 +47,8 @@ public struct BreakSettings: Equatable, Sendable {
     public var enabledCategories: [TipCategory]
     /// 菜单栏图标旁显示剩余时间
     public var showCountdownInMenuBar: Bool
+    /// 休息结束后启动系统屏幕保护
+    public var screenSaverAfterRest: Bool
 
     public init(
         workMinutes: Double,
@@ -56,7 +58,8 @@ public struct BreakSettings: Equatable, Sendable {
         deferWhenMediaInUse: Bool,
         tipIntervalSeconds: Double,
         enabledCategories: [TipCategory],
-        showCountdownInMenuBar: Bool
+        showCountdownInMenuBar: Bool,
+        screenSaverAfterRest: Bool
     ) {
         self.workMinutes = workMinutes
         self.restMinutes = restMinutes
@@ -66,6 +69,7 @@ public struct BreakSettings: Equatable, Sendable {
         self.tipIntervalSeconds = tipIntervalSeconds
         self.enabledCategories = enabledCategories
         self.showCountdownInMenuBar = showCountdownInMenuBar
+        self.screenSaverAfterRest = screenSaverAfterRest
     }
 
     public static let `default` = BreakSettings(
@@ -76,7 +80,8 @@ public struct BreakSettings: Equatable, Sendable {
         deferWhenMediaInUse: true,
         tipIntervalSeconds: 20,
         enabledCategories: TipCategory.allCases,
-        showCountdownInMenuBar: true
+        showCountdownInMenuBar: true,
+        screenSaverAfterRest: true
     )
 
     /// 设置界面上步进器的取值范围
@@ -128,6 +133,7 @@ public final class SettingsStore {
         static let tipIntervalSeconds = "tipIntervalSeconds"
         static let enabledCategories = "enabledCategories"
         static let showCountdownInMenuBar = "showCountdownInMenuBar"
+        static let screenSaverAfterRest = "screenSaverAfterRest"
     }
 
     public init(defaults: UserDefaults = .standard) {
@@ -146,7 +152,8 @@ public final class SettingsStore {
             deferWhenMediaInUse: bool(Key.deferWhenMediaInUse) ?? base.deferWhenMediaInUse,
             tipIntervalSeconds: double(Key.tipIntervalSeconds) ?? base.tipIntervalSeconds,
             enabledCategories: categories,
-            showCountdownInMenuBar: bool(Key.showCountdownInMenuBar) ?? base.showCountdownInMenuBar
+            showCountdownInMenuBar: bool(Key.showCountdownInMenuBar) ?? base.showCountdownInMenuBar,
+            screenSaverAfterRest: bool(Key.screenSaverAfterRest) ?? base.screenSaverAfterRest
         ).sanitized()
     }
 
@@ -159,6 +166,7 @@ public final class SettingsStore {
         defaults.set(settings.tipIntervalSeconds, forKey: Key.tipIntervalSeconds)
         defaults.set(settings.enabledCategories.map(\.rawValue), forKey: Key.enabledCategories)
         defaults.set(settings.showCountdownInMenuBar, forKey: Key.showCountdownInMenuBar)
+        defaults.set(settings.screenSaverAfterRest, forKey: Key.screenSaverAfterRest)
     }
 
     private func double(_ key: String) -> Double? {

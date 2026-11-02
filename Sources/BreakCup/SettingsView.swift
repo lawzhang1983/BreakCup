@@ -33,6 +33,7 @@ struct SettingsView: View {
                 stepperRow("提示轮换间隔", value: $model.settings.tipIntervalSeconds,
                            range: BreakSettings.tipIntervalRange, step: 5) { "\(Int($0)) 秒" }
                 categoryGrid
+                switchRow("休息结束后启动屏幕保护", hint: model.screenSaverHint, isOn: $model.settings.screenSaverAfterRest)
             }
 
             section("其他") {

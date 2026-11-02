@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    歇一杯 Windows 版：WPF 托盘应用，目标 .NET Framework 4.8（Windows 10 1903 起系统自带，免装运行库）。
+    界面全部用 C# 搭建，不用 XAML；核心逻辑在 Core/，与 Mac 版 BreakCupCore 逐行对应。
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>BreakCup</RootNamespace>
+    <AssemblyName>BreakCup</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>1.0.1</Version>
+    <Product>歇一杯</Product>
+    <AssemblyTitle>歇一杯 BreakCup</AssemblyTitle>
+    <Description>久坐强制休息</Description>
+    <Company>lawzhang1983</Company>
+    <Copyright>Copyright © 2026 lawzhang1983</Copyright>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="Exists('Assets\BreakCup.ico')">
+    <ApplicationIcon>Assets\BreakCup.ico</ApplicationIcon>
+  </PropertyGroup>
+
+</Project>

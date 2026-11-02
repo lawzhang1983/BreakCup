@@ -80,6 +80,7 @@ final class StatusBarController: NSObject {
             return
         }
         guard let button = item.button else { return }
+        model.refreshScreenSaverHint()
         NSApp.activate(ignoringOtherApps: true)
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.makeKey()

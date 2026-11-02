@@ -143,6 +143,27 @@ struct SchedulerTests {
         #expect(s.lastResetReason == .screenLocked)
     }
 
+    @Test func leavingDuringScreenSaverAfterRestOnlyRestartsTimer() {
+        // 休息 600–900 秒；休息中每 30 秒声明一次用户活动，所以收屏时空闲不到 30 秒
+        var s = BreakScheduler(settings: settings(), now: t0)
+        run(&s, from: 1, to: 900)
+        #expect(s.phase == .working(since: t0.addingTimeInterval(900)))
+        // 屏保期间人不在：空闲满 5 分钟按「离开过」重新计时，不会再进一次休息
+        run(&s, from: 901, to: 1180) { t in ActivityEnvironment(idleSeconds: t - 880) }
+        #expect(s.phase == .working(since: t0.addingTimeInterval(1180)))
+        #expect(s.lastResetReason == .away)
+        #expect(s.secondsUntilRest(now: t0.addingTimeInterval(1180)) == 600)
+
+        // 屏保要密码或直接锁屏：锁着的时间够一个休息时长，解锁时重新计时
+        var locked = BreakScheduler(settings: settings(), now: t0)
+        run(&locked, from: 1, to: 900)
+        run(&locked, from: 901, to: 1300) { t in ActivityEnvironment(idleSeconds: t - 880, screenLocked: true) }
+        #expect(locked.phase == .working(since: t0.addingTimeInterval(900)))
+        run(&locked, from: 1301, to: 1301)
+        #expect(locked.phase == .working(since: t0.addingTimeInterval(1301)))
+        #expect(locked.lastResetReason == .screenLocked)
+    }
+
     @Test func shortLockKeepsCountingAndPausesWarning() {
         var s = BreakScheduler(settings: settings(resetWhenAway: false), now: t0)
         run(&s, from: 1, to: 550)
@@ -219,8 +240,19 @@ struct SettingsTests {
         s.restMinutes = 8
         s.enabledCategories = [.eyes, .hydration]
         s.showCountdownInMenuBar = false
+        s.screenSaverAfterRest = false
         store.save(s)
         #expect(store.load() == s)
+        #expect(defaults.object(forKey: "screenSaverAfterRest") as? Bool == false)
+    }
+
+    @Test func screenSaverAfterRestIsOnByDefault() throws {
+        let suite = "breakcup.tests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set(30, forKey: "workMinutes")
+        // 旧版本存下的设置里没有这个键，升级后也要按默认打开
+        #expect(SettingsStore(defaults: defaults).load().screenSaverAfterRest)
     }
 }
 
@@ -256,6 +288,20 @@ struct TipTests {
         #expect(BreakFormat.menuBar(45) == "45秒")
         #expect(BreakFormat.menuBar(61) == "2分")
         #expect(BreakFormat.minutes(45) == "45 分钟")
+    }
+}
+
+struct ScreenLockTests {
+    @Test func parsesSysadminctlStatus() {
+        let prefix = "2026-11-02 17:18:35.657 sysadminctl[63098:59364797] "
+        #expect(ScreenLockDelay(sysadminctlOutput: prefix + "screenLock delay is 900 seconds\n") == .after(900))
+        #expect(ScreenLockDelay(sysadminctlOutput: prefix + "screenLock delay is immediate\n") == .immediate)
+        #expect(ScreenLockDelay(sysadminctlOutput: prefix + "screenLock delay is 0 seconds") == .immediate)
+        #expect(ScreenLockDelay(sysadminctlOutput: prefix + "screenLock is off\n") == .off)
+        #expect(ScreenLockDelay(sysadminctlOutput: "") == .unknown)
+        #expect(ScreenLockDelay.after(900).summary == "屏保开始 15 分钟后才要求密码，在那之前动一下键鼠就能回到桌面")
+        #expect(ScreenLockDelay.after(5).summary.hasPrefix("屏保开始 5 秒后"))
+        #expect(ScreenLockDelay.after(14_400).summary.hasPrefix("屏保开始 4 小时后"))
     }
 }
 

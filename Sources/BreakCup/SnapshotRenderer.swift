@@ -42,6 +42,9 @@ enum SnapshotRenderer {
         }
         model.refresh(scheduler: scheduler, media: MediaState(screenCaptureAudio: true), now: now)
         model.todayRestCount = 3
+        // 锁屏密码设置在后台读，等它回来再画面板
+        model.refreshScreenSaverHint()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.5))
         for (name, appearance) in [("settings-light.png", NSAppearance.Name.aqua), ("settings-dark.png", .darkAqua)] {
             // 离屏绘制不带弹窗底色，补一层窗口背景色
             writeHosted(SettingsView(model: model).background(Color(nsColor: .windowBackgroundColor)),
